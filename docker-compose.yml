@@ -1,0 +1,23 @@
+services:
+  gateway:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "127.0.0.1:8765:8765"
+    networks:
+      - proxy
+      - lan
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 20s
+
+networks:
+  proxy:
+    driver: bridge
+  lan:
+    external: true
+    name: ${CODELATER_LAN_NETWORK:-lan}

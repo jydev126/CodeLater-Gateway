@@ -1,0 +1,15 @@
+FROM python:3.12-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /app
+ARG PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
+RUN groupadd --gid 10001 feedback && useradd --uid 10001 --gid feedback --no-create-home feedback \
+    && mkdir /data && chown 10001:10001 /data
+COPY requirements-feedback.txt .
+RUN pip install --no-cache-dir -r requirements-feedback.txt
+COPY feedback.py .
+USER 10001:10001
+ENV FEEDBACK_HOST=0.0.0.0 FEEDBACK_PORT=8766 FEEDBACK_DATABASE=/data/feedback.db
+EXPOSE 8766
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.build_opener(urllib.request.ProxyHandler({})).open('http://127.0.0.1:8766/healthz', timeout=3).read()"
+CMD ["python", "feedback.py"]

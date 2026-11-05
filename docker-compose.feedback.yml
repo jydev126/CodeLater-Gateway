@@ -1,0 +1,31 @@
+# Optional, separate service: docker compose -f docker-compose.feedback.yml up -d --build
+services:
+  feedback:
+    build:
+      context: .
+      dockerfile: Dockerfile.feedback
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8766:8766"
+    environment:
+      FEEDBACK_DATABASE: /data/feedback.db
+      FEEDBACK_HOST: 0.0.0.0
+      # Exact reverse-proxy addresses only; empty means ignore forwarded headers.
+      FEEDBACK_TRUSTED_PROXIES: ${FEEDBACK_TRUSTED_PROXIES:-}
+    volumes:
+      - feedback-data:/data
+    networks:
+      - feedback-proxy
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    pids_limit: 64
+    stop_grace_period: 20s
+volumes:
+  feedback-data:
+networks:
+  feedback-proxy:
+    driver: bridge
